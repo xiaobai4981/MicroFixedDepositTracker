@@ -1,0 +1,113 @@
+package com.leyou.microfdtracker.data.alarm
+
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.util.Log
+import com.leyou.microfdtracker.utils.DateUtils.toDateString
+import javax.inject.Inject
+
+class AlarmScheduler @Inject constructor(private val context: Context) {
+
+    companion object {
+        const val ALARM_TYPE_MATURITY = 0
+        const val ALARM_TYPE_BEFORE_MATURITY = 1
+    }
+
+    fun scheduleAlarm(
+        fixedDepositID: Int,
+        title: String,
+        message: String,
+        maturityDate: Long,
+        daysBefore: Int
+    ) {
+        if (daysBefore <= 0) {
+            val intent = Intent(context, AlarmReceiver::class.java).apply {
+                putExtra("title", title)
+                putExtra("message", message)
+                putExtra("fdID", fixedDepositID)
+            }
+            scheduleMaturityAlarm(fixedDepositID, maturityDate, intent)
+        } else {
+            val intent = Intent(context, AlarmReceiver::class.java).apply {
+                putExtra("title", title)
+                putExtra("message", message)
+                putExtra("fdID", fixedDepositID)
+            }
+            scheduleBeforeMaturityDateAlarm(fixedDepositID, maturityDate, daysBefore, intent)
+        }
+        Log.d("myapp", "maturityMessage: $message")
+    }
+
+    private fun scheduleMaturityAlarm(fixedDepositID: Int, maturityDate: Long, intent: Intent) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            fixedDepositID * 100 + ALARM_TYPE_MATURITY,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            maturityDate,
+            pendingIntent
+        )
+    }
+
+    private fun scheduleBeforeMaturityDateAlarm(
+        fixedDepositID: Int,
+        maturityDate: Long,
+        daysBefore: Int,
+        intent: Intent
+    ) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val notifyTime = maturityDate - daysBefore * 24 * 60 * 60 * 1000
+        if (notifyTime > System.currentTimeMillis()) {
+            Log.d("myapp", "${notifyTime.toDateString()} is in future")
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                fixedDepositID * 100 + ALARM_TYPE_BEFORE_MATURITY,
+                intent,
+                PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                notifyTime,
+                pendingIntent
+            )
+        }
+    }
+
+    fun cancelAlarm(fixedDepositID: Int) {
+        cancelMaturityAlarm(fixedDepositID)
+        cancelBeforeMaturityAlarm(fixedDepositID)
+    }
+
+    private fun cancelMaturityAlarm(fixedDepositID: Int) {
+        Log.d("myapp", "cancelMaturityAlarm: Alarm with ID $fixedDepositID is cancelled")
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            fixedDepositID * 100 + ALARM_TYPE_MATURITY,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
+    }
+
+    private fun cancelBeforeMaturityAlarm(fixedDepositID: Int) {
+        Log.d("myapp", "cancelBeforeMaturityAlarm: Alarm with ID $fixedDepositID is cancelled")
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            fixedDepositID * 100 + ALARM_TYPE_BEFORE_MATURITY,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
+    }
+
+}

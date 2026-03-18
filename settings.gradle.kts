@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FDTracker"
+rootProject.name = "MicroFixedDepositTracker"
 include(":app")

@@ -48,7 +48,12 @@ class AlarmScheduler @Inject constructor(private val context: Context) {
             intent,
             PendingIntent.FLAG_IMMUTABLE
         )
-        alarmManager.setExactAndAllowWhileIdle(
+//        alarmManager.setExactAndAllowWhileIdle(
+//            AlarmManager.RTC_WAKEUP,
+//            maturityDate,
+//            pendingIntent
+//        )
+        alarmManager.setAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
             maturityDate,
             pendingIntent
@@ -71,7 +76,12 @@ class AlarmScheduler @Inject constructor(private val context: Context) {
                 intent,
                 PendingIntent.FLAG_IMMUTABLE
             )
-            alarmManager.setExactAndAllowWhileIdle(
+//            alarmManager.setExactAndAllowWhileIdle(
+//                AlarmManager.RTC_WAKEUP,
+//                notifyTime,
+//                pendingIntent
+//            )
+            alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 notifyTime,
                 pendingIntent
